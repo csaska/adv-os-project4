@@ -89,3 +89,36 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_kmalloc(void)
+{
+  int nbytes;
+  if(argint(0, &nbytes) < 0)
+    return -1;
+  return (int)kmalloc((uint)nbytes);
+}
+
+int
+sys_kmfree(void)
+{
+  int addr;
+  if(argint(0, &addr) < 0)
+    return -1;
+  kmfree((void*)addr);
+  return 0;
+}
+
+int
+sys_mmap(void)
+{
+  // TODO: implement
+  return 0;
+}
+
+int
+sys_munmap(void)
+{
+  // TODO: implement
+  return 0;
+}
