@@ -95,6 +95,11 @@ kmfree(void *addr)
 
 void *mmap(void *addr, int length, int prot, int flags, int fd, int offset)
 {
+  if (length < 1)
+    return 0;
+
+  //struct proc *curproc = myproc();
+
   return 0;
 }
 
