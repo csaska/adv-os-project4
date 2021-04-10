@@ -2,6 +2,7 @@
 #include "defs.h"
 #include "param.h"
 #include "memlayout.h"
+#include "mman.h"
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
@@ -32,6 +33,49 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+int
+pagefault_handler(struct trapframe *tf)
+{
+  struct proc* curproc = myproc();
+  uint fault_addr = rcr2();
+  // TODO: uncomment me when you are done with project 4 tests
+  //  cprintf("============in pagefault_handler============\n");
+  //  cprintf("pid %d %s: trap %d err %d on cpu %d "
+  //    "eip 0x%x addr 0x%x\n",
+  //    curproc->pid, curproc->name, tf->trapno, tf->err, cpuid(), tf->eip, fault_addr);
+
+  // Find the region that contains our fault address or return
+  struct mmregion *region = curproc->mmregion_head; 
+  while (1) {
+    if (!region)
+      return -1;
+    if (region->addr <= fault_addr && (region->addr + region->rsize) > fault_addr)
+      break;
+    region = region->rnext;
+  }
+
+  // Allocate a page of memory around fault address
+  char *mem = kalloc();
+  if(mem == 0) {
+    cprintf("pagefault_handler out of memory\n");
+    return -1;
+  }
+  memset(mem, 0, PGSIZE);
+
+  int perm = PTE_U;
+  if (region->prot == PROT_WRITE)
+    perm |= PTE_W;
+
+  if (mappages(curproc->pgdir, (char*)PGROUNDDOWN(fault_addr), PGSIZE, V2P(mem), perm) < 0)
+    return -1;
+
+  switchuvm(curproc);
+
+  // TODO: file back the memory
+
+  return 0;
+}
+
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -45,6 +89,10 @@ trap(struct trapframe *tf)
       exit();
     return;
   }
+
+  // Attempt to handle pagefaults
+  if (tf->trapno == T_PGFLT && pagefault_handler(tf) == 0)
+    return;
 
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:

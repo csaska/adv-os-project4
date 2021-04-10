@@ -112,6 +112,9 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  // Clear any previous mmap state
+  p->mmregion_head = 0;
+
   return p;
 }
 
@@ -190,12 +193,23 @@ fork(void)
   }
 
   // Copy process state from proc.
+  np->mmregion_head = 0;
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
   }
+
+  // Copy memory mapped regions
+  struct mmregion* curr = curproc->mmregion_head;
+  while (curr) {
+    struct mmregion *new_region = create_region(np, (void*)curr->addr, curr->length);
+    if (np->mmregion_head == 0)
+      np->mmregion_head = new_region;
+    curr = curr->rnext;
+  }
+
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;

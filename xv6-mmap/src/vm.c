@@ -57,7 +57,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
 // Create PTEs for virtual addresses starting at va that refer to
 // physical addresses starting at pa. va and size might not
 // be page-aligned.
-static int
+int
 mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
 {
   char *a, *last;
@@ -295,6 +295,14 @@ freevm(pde_t *pgdir)
     }
   }
   kfree((char*)pgdir);
+
+  struct proc *curproc = myproc();
+  struct mmregion *curr = curproc->mmregion_head;
+  while(curr) {
+    struct mmregion *temp = curr;
+    curr = curr->rnext;
+    kfree((char*)temp);
+  }
 }
 
 // Clear PTE_U on a page. Used to create an inaccessible

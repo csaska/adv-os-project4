@@ -155,3 +155,15 @@ filewrite(struct file *f, char *addr, int n)
   panic("filewrite");
 }
 
+int
+fileseek(struct file* f, uint offset)
+{
+  // TODO: are there error scenarios to consider here?
+  if(f->type == FD_INODE){
+    ilock(f->ip);
+    f->off = offset;
+    iunlock(f->ip);
+    return 0;
+  }
+  return -1;
+}

@@ -35,15 +35,18 @@ struct context {
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
-struct {
-  void *addr;
+struct mmregion {
+  uint addr;
   uint length;
-  int rtype;
+  int prot;
   int offset;
   int fd;
 
-  struct mmregion *next;
-} mmregion;
+  int rtype;
+  int rfree;
+  int rsize;
+  struct mmregion *rnext;
+};
 
 
 struct proc {

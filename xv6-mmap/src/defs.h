@@ -33,6 +33,7 @@ void            fileinit(void);
 int             fileread(struct file*, char*, int n);
 int             filestat(struct file*, struct stat*);
 int             filewrite(struct file*, char*, int n);
+int             fileseek(struct file*, uint offset);
 
 // fs.c
 void            readsb(int dev, struct superblock *sb);
@@ -74,6 +75,7 @@ void*           kmalloc(uint nbytes);
 void            kmfree(void *addr);
 void*           mmap(void *addr, int length, int prot, int flags, int fd, int offset);
 int             munmap(void *addr, int length);
+struct mmregion* create_region(struct proc *curproc, void *addr, int length);
 
 // kbd.c
 void            kbdintr(void);
@@ -191,6 +193,7 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
+int             mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

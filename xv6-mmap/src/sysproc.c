@@ -113,6 +113,8 @@ int
 sys_mmap(void)
 {
   int addr, length, prot, flags, fd, offset;
+  //  if(argptr(0, (void*)&addr, sizeof(*addr) < 0))
+  //    return -1;
   if(argint(0, &addr)<0)
     return -1;
   if(argint(1, &length)<0)
@@ -142,5 +144,11 @@ sys_munmap(void)
   int addr, length;
   if(argint(0, &addr)<0 || argint(1, &length)<0)
     return -1;
-  return munmap((void*)addr, (uint)length);
+  return (int)munmap((void*)addr, (uint)length);
+}
+
+int
+sys_msync(void)
+{
+  return 0;
 }

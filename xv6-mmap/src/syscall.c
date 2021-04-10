@@ -134,6 +134,7 @@ static int (*syscalls[])(void) = {
 [SYS_kmfree]  sys_kmfree,
 [SYS_mmap]    sys_mmap,
 [SYS_munmap]  sys_munmap,
+[SYS_msync]   sys_msync,
 };
 
 void
