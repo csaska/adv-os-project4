@@ -142,5 +142,5 @@ sys_munmap(void)
   int addr, length;
   if(argint(0, &addr)<0 || argint(1, &length)<0)
     return -1;
-  return munmap((void*)addr, (uint)length);
+  return (int)munmap((void*)addr, (uint)length);
 }

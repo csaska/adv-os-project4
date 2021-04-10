@@ -35,15 +35,17 @@ struct context {
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
-struct {
+struct mmregion {
   void *addr;
   uint length;
-  int rtype;
   int offset;
   int fd;
 
-  struct mmregion *next;
-} mmregion;
+  int rtype;
+  int rfree;
+  int rsize;
+  struct mmregion *rnext;
+};
 
 
 struct proc {
@@ -60,7 +62,10 @@ struct proc {
   struct file *ofile[NOFILE];         // Open files
   struct inode *cwd;                  // Current directory
   char name[16];                      // Process name (debugging)
+
+  // TODO: should I initialized somewhere?
   struct mmregion *mmregion_head;     // Linked list of memory map regions
+  int colt;
 };
 
 // Process memory is laid out contiguously, low addresses first:
