@@ -150,5 +150,8 @@ sys_munmap(void)
 int
 sys_msync(void)
 {
-  return 0;
+  int addr, length;
+  if(argint(0, &addr)<0 || argint(1, &length)<0)
+    return -1;
+  return (int)msync((void*)addr, (uint)length);
 }

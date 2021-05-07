@@ -164,8 +164,12 @@ create_region(struct proc *curproc, void *addr, int length)
   new_region->rnext = NULL;
   new_region->rfree = 0;
   new_region->rsize = PGROUNDUP(length);
+  new_region->rtype = MAP_ANONYMOUS;
+
   new_region->addr = (uint)addr;
   new_region->length = length;
+  new_region->prot = 0;
+  new_region->fd = -1;
 
   // Add mmregion to proc's mmregion list in order
   struct mmregion *curr = curproc->mmregion_head;
@@ -303,34 +307,35 @@ mmap(void *addr, int length, int prot, int flags, int fd, int offset)
   if (flags == MAP_FILE && fd < 0)
     return 0;
 
+  if (flags != 0 && flags != MAP_ANONYMOUS && flags != MAP_FILE)
+    return 0;
+
   struct proc *curproc = myproc();
 
-  struct mmregion *mmregion = 0;
-  if ((mmregion = get_free_region(curproc, addr, length)) == 0) {
+  struct mmregion *region = 0;
+  if ((region = get_free_region(curproc, addr, length)) == 0) {
     // Create and allocate a new region
-    mmregion = create_region(curproc, (void*)curproc->sz, length);
+    region = create_region(curproc, (void*)curproc->sz, length);
 
     // Always start new region by growing address space(void*)curproc->sz;
     curproc->sz = curproc->sz + PGROUNDUP(length);
   }
 
+  // Set flags, offset, and prot
+  region->rtype = flags;
+  region->offset = offset;
+  region->prot = prot;
 
-  if (flags== MAP_ANONYMOUS) {
-  } else if (flags == MAP_FILE) {
+  // Set fd
+  if (flags == MAP_FILE) {
+    // TODO: check if fd corresponds to something other than an inode?
+    if ((fd = fdalloc(curproc->ofile[fd])) < 0)
+      return 0;
+    filedup(curproc->ofile[fd]);
+    region->fd = fd;
   }
 
-  //  if (fd > -1) {
-  //    // TODO: check if fd corresponds to something other than an inode?
-  //    if ((fd = fdalloc(curproc->ofile[fd])) < 0)
-  //      return 0;
-  //    filedup(curproc->ofile[fd]);
-  //  }
-  //  mmregion->fd = fd;
-  //  mmregion->prot = prot;
-  // TODO: remove when moving to project 5 tests
-  mmregion->prot =  PROT_WRITE;
-
-  return (void*)mmregion->addr;
+  return (void*)region->addr;
 }
 
 int
@@ -338,23 +343,43 @@ munmap(void *addr, int length)
 {
   struct proc *curproc = myproc();
 
-  struct mmregion *mmregion = get_region(curproc, addr, length);
-  if (mmregion == NULL)
+  struct mmregion *region = get_region(curproc, addr, length);
+  if (region == NULL)
     return -1;
 
   // clear data previously mapped to region
-  //  memset(addr, 0, mmregion->rsize);
+  // TODO: need to be smart about which memory we erase
+  //  memset(addr, 0, region->rsize);
 
   // deallocate physical memory so process can no longer access
-  if (deallocate_region_addr(mmregion) == -1)
+  if (deallocate_region_addr(region) == -1)
     return -1;
   switchuvm(curproc);
 
+  // close file if we opened one
+  if (region->rtype == MAP_FILE) {
+    fileclose(curproc->ofile[region->fd]);
+    curproc->ofile[region->fd] = 0;
+  }
 
   // clear region state
-  mmregion->rfree = 1;
+  region->rfree = 1;
 
   merge_free_regions(curproc);
+
+  return 0;
+}
+
+int
+msync(void *start_addr, int length)
+{
+  struct proc *curproc = myproc();
+
+  struct mmregion *mmregion = get_region(curproc, start_addr, length);
+  if (mmregion == NULL)
+    return -1;
+
+  // TODO: implement me
 
   return 0;
 }

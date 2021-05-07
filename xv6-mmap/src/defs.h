@@ -75,6 +75,7 @@ void*           kmalloc(uint nbytes);
 void            kmfree(void *addr);
 void*           mmap(void *addr, int length, int prot, int flags, int fd, int offset);
 int             munmap(void *addr, int length);
+int             msync(void *start_addr, int length);
 struct mmregion* create_region(struct proc *curproc, void *addr, int length);
 
 // kbd.c
@@ -163,6 +164,9 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+
+// sysfile.c
+int             fdalloc(struct file*);
 
 // timer.c
 void            timerinit(void);

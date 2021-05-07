@@ -107,6 +107,7 @@ extern int sys_kmalloc(void);
 extern int sys_kmfree(void);
 extern int sys_mmap(void);
 extern int sys_munmap(void);
+extern int sys_msync(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,

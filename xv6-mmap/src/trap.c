@@ -38,11 +38,15 @@ pagefault_handler(struct trapframe *tf)
 {
   struct proc* curproc = myproc();
   uint fault_addr = rcr2();
-  // TODO: uncomment me when you are done with project 4 tests
-  //  cprintf("============in pagefault_handler============\n");
-  //  cprintf("pid %d %s: trap %d err %d on cpu %d "
-  //    "eip 0x%x addr 0x%x\n",
-  //    curproc->pid, curproc->name, tf->trapno, tf->err, cpuid(), tf->eip, fault_addr);
+
+  cprintf("============in pagefault_handler============\n");
+  cprintf("pid %d %s: trap %d err %d on cpu %d "
+    "eip 0x%x addr 0x%x\n",
+    curproc->pid, curproc->name, tf->trapno, tf->err, cpuid(), tf->eip, fault_addr);
+
+  // If error code is a result of page violation
+  if (tf->err & 0x1)
+    return -1;
 
   // Find the region that contains our fault address or return
   struct mmregion *region = curproc->mmregion_head; 
@@ -71,7 +75,12 @@ pagefault_handler(struct trapframe *tf)
 
   switchuvm(curproc);
 
-  // TODO: file back the memory
+  if (region->rtype == MAP_FILE) {
+    fileseek(curproc->ofile[region->fd], region->offset);
+    fileread(curproc->ofile[region->fd], mem, region->length);
+
+    // TODO: clear dirty  bit
+  }
 
   return 0;
 }
