@@ -347,19 +347,6 @@ munmap(void *addr, int length)
   if (region == NULL)
     return -1;
 
-  // clear data previously mapped to region one page at a time
-  //  uint a = (uint)addr;
-  //  for(; a < (uint)addr + length; a += PGSIZE) {
-  //    pte_t *pte = walkpgdir(curproc->pgdir, (char*)a, 0);
-  //    // address hasn't been used yet or hasn't been written
-  //    if (pte == NULL)
-  //      continue 0;
-
-  //    // TODO: only write page if dirty bit is set
-
-  //    memset(addr, 0, PGSIZE);
-  //  }
-
   // deallocate physical memory so process can no longer access
   if (deallocate_region_addr(region) == -1)
     return -1;
@@ -396,6 +383,7 @@ msync(void *start_addr, int length)
     if (!pte || (*pte & PTE_D) == 0)
       continue;
 
+    // TODO: can we combine continuous writes into one invocation
     // write contents of page back to file
     if (fileseek(curproc->ofile[region->fd], offset) == -1)
       return -1;
