@@ -71,17 +71,23 @@ pagefault_handler(struct trapframe *tf)
     perm |= PTE_W;
 
   uint page_fault_base = PGROUNDDOWN(fault_addr);
-  if (mappages(curproc->pgdir, (char*)page_fault_base, PGSIZE, V2P(mem), perm) < 0)
+  if (mappages(curproc->pgdir, (char*)page_fault_base, PGSIZE, V2P(mem), perm) < 0) {
+    kfree(mem);
     return -1;
+  }
 
   switchuvm(curproc);
 
   if (region->rtype == MAP_FILE) {
     int file_offset = region->offset + page_fault_base - region->addr;
-    if (fileseek(curproc->ofile[region->fd], file_offset) == -1)
+    if (fileseek(curproc->ofile[region->fd], file_offset) == -1) {
+      kfree(mem);
       return -1;
-    if (fileread(curproc->ofile[region->fd], mem, region->length) == -1)
+    }
+    if (fileread(curproc->ofile[region->fd], mem, region->length) == -1) {
+      kfree(mem);
       return -1;
+    }
 
     // clear dirty  bit
     pte_t *pte = walkpgdir(curproc->pgdir, (char*)page_fault_base, 0);
@@ -89,7 +95,6 @@ pagefault_handler(struct trapframe *tf)
       return -1;
     *pte &= ~PTE_D;
   }
-
   return 0;
 }
 

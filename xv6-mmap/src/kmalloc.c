@@ -310,10 +310,12 @@ mmap(void *addr, int length, int prot, int flags, int fd, int offset)
 
   struct proc *curproc = myproc();
 
+  int new_region = 0;
   struct mmregion *region = 0;
   if ((region = get_free_region(curproc, addr, length)) == 0) {
     // Create and allocate a new region
     region = create_region(curproc, (void*)curproc->sz, length);
+    new_region = 1;
 
     // Always start new region by growing address space(void*)curproc->sz;
     curproc->sz = curproc->sz + PGROUNDUP(length);
@@ -326,15 +328,20 @@ mmap(void *addr, int length, int prot, int flags, int fd, int offset)
 
   // Set fd
   if (flags == MAP_FILE) {
-    if(curproc->ofile[fd]->type != FD_INODE)
+    if(curproc->ofile[fd]->type != FD_INODE) {
+      if (new_region)
+        kfree((char*)region);
       return 0;
+    }
 
-    if ((fd = fdalloc(curproc->ofile[fd])) < 0)
+    if ((fd = fdalloc(curproc->ofile[fd])) < 0) {
+      if (new_region)
+        kfree((char*)region);
       return 0;
+    }
     filedup(curproc->ofile[fd]);
     region->fd = fd;
   }
-
   return (void*)region->addr;
 }
 
