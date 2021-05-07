@@ -393,10 +393,8 @@ msync(void *start_addr, int length)
   for(; a < (uint)start_addr + length;) {
     pte_t *pte = walkpgdir(curproc->pgdir, (char*)a, 0);
     // address hasn't been used yet or hasn't been written
-    if (pte == NULL)
+    if (!pte || (*pte & PTE_D) == 0)
       continue;
-
-    // TODO: only write page if dirty bit is set
 
     // write contents of page back to file
     if (fileseek(curproc->ofile[region->fd], offset) == -1)

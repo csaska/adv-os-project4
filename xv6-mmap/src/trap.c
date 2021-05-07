@@ -81,7 +81,11 @@ pagefault_handler(struct trapframe *tf)
     if (fileread(curproc->ofile[region->fd], mem, region->length) == -1)
       return -1;
 
-    // TODO: clear dirty  bit
+    // clear dirty  bit
+    pte_t *pte = walkpgdir(curproc->pgdir, (char*)PGROUNDDOWN(fault_addr), 0);
+    if (!pte)
+      return -1;
+    *pte &= ~PTE_D;
   }
 
   return 0;
