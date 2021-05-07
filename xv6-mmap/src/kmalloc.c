@@ -272,8 +272,6 @@ deallocate_region_addr(struct mmregion* mmregion)
   if (deallocuvm(curproc->pgdir, ub, lb) == 0)
     return -1;
 
-  // TODO: how much of the data structure should we deallocate?
-
   return 0;
 }
 
@@ -328,7 +326,9 @@ mmap(void *addr, int length, int prot, int flags, int fd, int offset)
 
   // Set fd
   if (flags == MAP_FILE) {
-    // TODO: check if fd corresponds to something other than an inode?
+    if(curproc->ofile[fd]->type != FD_INODE)
+      return 0;
+
     if ((fd = fdalloc(curproc->ofile[fd])) < 0)
       return 0;
     filedup(curproc->ofile[fd]);
