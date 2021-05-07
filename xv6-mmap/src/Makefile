@@ -77,7 +77,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Og -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -190,8 +190,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+fs.img: mkfs README sample.txt $(UPROGS)
+	./mkfs fs.img README sample.txt $(UPROGS)
 
 -include *.d
 
@@ -204,7 +204,7 @@ clean:
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list runoff.spec README toc.hdr toc.ftr $(FILES)
+PRINT = runoff.list runoff.spec README sample.txt toc.hdr toc.ftr $(FILES)
 
 xv6.pdf: $(PRINT)
 	./runoff
@@ -257,11 +257,10 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 EXTRA=\
 	mkfs.c xv6test_1.c xv6test_2.c xv6test_3.c xv6test_4.c xv6test_5.c xv6test_6.c xv6test_7.c\
-	ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
-	kmalloc.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+	kmalloc.c\
 	printf.c umalloc.c\
-	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+	README sample.txt dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 
 dist:

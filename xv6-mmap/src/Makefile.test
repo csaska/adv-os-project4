@@ -7,6 +7,7 @@ OBJS = \
 	ide.o\
 	ioapic.o\
 	kalloc.o\
+	kmalloc.o\
 	kbd.o\
 	lapic.o\
 	log.o\
@@ -169,6 +170,13 @@ UPROGS=\
 	_cat\
 	_echo\
 	_forktest\
+	_xv6test_1\
+	_xv6test_2\
+	_xv6test_3\
+	_xv6test_4\
+	_xv6test_5\
+	_xv6test_6\
+	_xv6test_7\
 	_grep\
 	_init\
 	_kill\
@@ -181,7 +189,6 @@ UPROGS=\
 	_test_5\
 	_test_6\
 	_test_7\
-	_test_8\
 	_mkdir\
 	_rm\
 	_sh\
@@ -190,8 +197,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+fs.img: mkfs README sample.txt $(UPROGS)
+	./mkfs fs.img README sample.txt $(UPROGS)
 
 -include *.d
 
@@ -204,7 +211,7 @@ clean:
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list runoff.spec README toc.hdr toc.ftr $(FILES)
+PRINT = runoff.list runoff.spec README sample.txt toc.hdr toc.ftr $(FILES)
 
 xv6.pdf: $(PRINT)
 	./runoff
@@ -256,10 +263,11 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # check in that version.
 
 EXTRA=\
-	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
+	mkfs.c xv6test_1.c xv6test_2.c xv6test_3.c xv6test_4.c xv6test_5.c xv6test_6.c xv6test_7.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+	kmalloc.c\
 	printf.c umalloc.c\
-	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+	README sample.txt dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 
 dist:

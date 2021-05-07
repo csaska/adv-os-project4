@@ -379,17 +379,15 @@ msync(void *start_addr, int length)
   uint offset = region->offset;
   for(; a < (uint)start_addr + length;) {
     pte_t *pte = walkpgdir(curproc->pgdir, (char*)a, 0);
-    // address hasn't been used yet or hasn't been written
-    if (!pte || (*pte & PTE_D) == 0)
-      continue;
-
-    // TODO: can we combine continuous writes into one invocation
-    // write contents of page back to file
-    if (fileseek(curproc->ofile[region->fd], offset) == -1)
-      return -1;
-    if (filewrite(curproc->ofile[region->fd], (char*)a, PGSIZE) == -1)
-      return -1;
-
+    // check that pte is present and dirty bit is set
+    if (pte && (*pte & PTE_P) && (*pte & PTE_D)) {
+      // TODO: can we combine continuous writes into one invocation
+      // write contents of page back to file
+      if (fileseek(curproc->ofile[region->fd], offset) == -1)
+        return -1;
+      if (filewrite(curproc->ofile[region->fd], (char*)a, PGSIZE) == -1)
+        return -1;
+    }
     a += PGSIZE;
     offset += PGSIZE;
   }
