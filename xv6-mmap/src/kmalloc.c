@@ -375,11 +375,22 @@ msync(void *start_addr, int length)
 {
   struct proc *curproc = myproc();
 
-  struct mmregion *mmregion = get_region(curproc, start_addr, length);
-  if (mmregion == NULL)
+  struct mmregion *region = get_region(curproc, start_addr, length);
+  if (region == NULL)
     return -1;
 
-  // TODO: implement me
+  pte_t *pte = walkpgdir(curproc->pgdir, start_addr, 0);
 
+  // TODO: need to check dirty bit
+  // address hasn't been used yet or hasn't been written
+  if (pte == NULL)
+    return 0;
+
+  // TODO: need to check that all pages being written have been allocated!
+  // write contents of region back to memory
+  if (fileseek(curproc->ofile[region->fd], region->offset) == -1)
+    return -1;
+  if (filewrite(curproc->ofile[region->fd], start_addr, length) == -1)
+    return -1;
   return 0;
 }

@@ -76,8 +76,10 @@ pagefault_handler(struct trapframe *tf)
   switchuvm(curproc);
 
   if (region->rtype == MAP_FILE) {
-    fileseek(curproc->ofile[region->fd], region->offset);
-    fileread(curproc->ofile[region->fd], mem, region->length);
+    if (fileseek(curproc->ofile[region->fd], region->offset) == -1)
+      return -1;
+    if (fileread(curproc->ofile[region->fd], mem, region->length) == -1)
+      return -1;
 
     // TODO: clear dirty  bit
   }
