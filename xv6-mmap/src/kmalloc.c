@@ -347,9 +347,18 @@ munmap(void *addr, int length)
   if (region == NULL)
     return -1;
 
-  // clear data previously mapped to region
-  // TODO: need to be smart about which memory we erase
-  //  memset(addr, 0, region->rsize);
+  // clear data previously mapped to region one page at a time
+  //  uint a = (uint)addr;
+  //  for(; a < (uint)addr + length; a += PGSIZE) {
+  //    pte_t *pte = walkpgdir(curproc->pgdir, (char*)a, 0);
+  //    // address hasn't been used yet or hasn't been written
+  //    if (pte == NULL)
+  //      continue 0;
+
+  //    // TODO: only write page if dirty bit is set
+
+  //    memset(addr, 0, PGSIZE);
+  //  }
 
   // deallocate physical memory so process can no longer access
   if (deallocate_region_addr(region) == -1)
@@ -379,18 +388,24 @@ msync(void *start_addr, int length)
   if (region == NULL)
     return -1;
 
-  pte_t *pte = walkpgdir(curproc->pgdir, start_addr, 0);
+  uint a = (uint)start_addr;
+  uint offset = region->offset;
+  for(; a < (uint)start_addr + length;) {
+    pte_t *pte = walkpgdir(curproc->pgdir, (char*)a, 0);
+    // address hasn't been used yet or hasn't been written
+    if (pte == NULL)
+      continue;
 
-  // TODO: need to check dirty bit
-  // address hasn't been used yet or hasn't been written
-  if (pte == NULL)
-    return 0;
+    // TODO: only write page if dirty bit is set
 
-  // TODO: need to check that all pages being written have been allocated!
-  // write contents of region back to memory
-  if (fileseek(curproc->ofile[region->fd], region->offset) == -1)
-    return -1;
-  if (filewrite(curproc->ofile[region->fd], start_addr, length) == -1)
-    return -1;
+    // write contents of page back to file
+    if (fileseek(curproc->ofile[region->fd], offset) == -1)
+      return -1;
+    if (filewrite(curproc->ofile[region->fd], (char*)a, PGSIZE) == -1)
+      return -1;
+
+    a += PGSIZE;
+    offset += PGSIZE;
+  }
   return 0;
 }
